@@ -516,7 +516,15 @@
     .chart-grid { grid-template-columns: 1fr; }
     .forecast-summary { grid-template-columns: 1fr 1fr; }
   }
+
+  /* ElevenLabs Floating Widget - Added by AI */
+  elevenlabs-agent {
+    --accent-color: #38bdf8;
+    --background: rgba(20, 20, 30, 0.9);
+    --border-radius: 18px;
+  }
 </style>
+
 </head>
 <body>
 <div class="app">
@@ -2027,5 +2035,17 @@ document.getElementById('companySelect').addEventListener('change', () => {
   }
 });
 </script>
+  <!-- ElevenLabs Voice Widget - Added by AI -->
+  <!-- Custom Call Card -->
+  <elevenlabs-convai 
+    agent-id="agent_0401knhw96dhem5bfhcq6crv7axg">
+  </elevenlabs-convai>
+
+  <script 
+    src="https://unpkg.com/@elevenlabs/convai-widget-embed"
+    async
+    type="text/javascript">
+  </script>
 </body>
+
 </html>
