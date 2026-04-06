@@ -204,8 +204,6 @@ def fit_ml_classifiers(df_features: pd.DataFrame) -> dict:
     n_samples = len(df)
     # Exponentially increasing weights from 0.1 to 1.0
     sample_weights = np.exp(np.linspace(-2, 0, n_samples))
-    # Give the last day (Today's Live Rate) a 50x massive boost to force decisiveness
-    sample_weights[-1] *= 50.0
 
     models = {
         "Random Forest": RandomForestClassifier(
@@ -328,25 +326,19 @@ def fit_ml_classifiers(df_features: pd.DataFrame) -> dict:
         top_idx = np.argsort(imp)[-10:][::-1]
         importance = {available_cols[i]: round(float(imp[i]), 4) for i in top_idx}
 
-    # Sigmoid function to sharpen probabilities away from 0.5 center.
-    # This makes the AI more "Bold" and decisive for the user.
-    def sharpen(p):
-        centered = p - 0.5
-        # Stretch it: (p^0.5) approach for more decisive curves
-        p_sharp = 0.5 + 0.5 * np.sign(centered) * (np.abs(centered * 2) ** 0.6)
-        return float(p_sharp)
-
-    raw_prob = float(pred_proba[1])
-    sharpened_prob = sharpen(raw_prob)
-
+    # Determine final prediction results
+    profit_prob = float(pred_proba[1] * 100)
+    
     return {
-        "results": results,
         "best_model": best_name,
         "best_accuracy": round(best_acc * 100, 2),
-        "next_day_prediction": "PROFIT" if sharpened_prob > 0.5 else "LOSS",
-        "confidence": round(max(sharpened_prob, 1 - sharpened_prob) * 100, 1),
-        "profit_probability": round(sharpened_prob * 100, 1),
+        "next_day_prediction": "PROFIT" if pred == 1 else "LOSS",
+        "confidence": round(float(max(pred_proba) * 100), 2),
+        "profit_probability": round(profit_prob, 2),
         "feature_importance": importance,
+        "results": results,
+        "ensemble_prediction": "PROFIT" if ensemble_pred == 1 else "LOSS",
+        "ensemble_confidence": round(ensemble_conf * 100, 2),
         "ensemble_votes": votes
     }
 
@@ -537,16 +529,11 @@ def full_analysis(ticker: str) -> dict:
     # Increased target to 1.5% to make "PROFIT" a meaningful and decisive event.
     forward_return = df['Close'].shift(-3) / df['Close'] - 1
     df['Target'] = (forward_return > 0.015).astype(int)
-    monthly_data = {
-        "dates": [d.strftime('%Y-%m') for d in monthly_returns.index],
-        "returns": (monthly_returns * 100).round(2).tolist()
-    }
-
     # 13. Monthly returns
-    monthly_returns = df['Close'].resample('ME').last().pct_change().dropna()
+    final_monthly_rets = df['Close'].resample('ME').last().pct_change().dropna()
     monthly_data = {
-        "dates": [d.strftime('%Y-%m') for d in monthly_returns.index],
-        "returns": (monthly_returns * 100).round(2).tolist()
+        "dates": [d.strftime('%Y-%m') for d in final_monthly_rets.index],
+        "returns": (final_monthly_rets * 100).round(2).tolist()
     }
 
     # 14. Pattern detection
