@@ -1,1 +1,1 @@
-# nepse-stock-predictor
+# nepse-stock-predictor (nepal stock exchange)
